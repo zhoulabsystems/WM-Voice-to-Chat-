@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>💧 Water Meter Recorder</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+:root{
+  --blue:#1a73e8;--blue-lt:#e8f0fe;--blue-dk:#0c47a1;
+  --green:#1e8e3e;--green-lt:#e6f4ea;
+  --red:#d93025;--red-lt:#fce8e6;
+  --amber:#e37400;--amber-lt:#fef3e2;
+  --g50:#f8f9fa;--g100:#f1f3f4;--g200:#e8eaed;
+  --g400:#9aa0a6;--g600:#5f6368;--g800:#3c4043;--g900:#202124;
+  --white:#fff;--r:12px;--rs:8px;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;background:var(--g50);color:var(--g900);min-height:100vh;padding-bottom:40px;}
+.topbar{background:var(--white);border-bottom:1px solid var(--g200);padding:14px 16px;display:flex;align-items:center;gap:10px;}
+.topbar-icon{width:38px;height:38px;background:var(--blue-lt);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
+.topbar h1{font-size:17px;font-weight:700;color:var(--g900);}
+.topbar p{font-size:12px;color:var(--g600);margin-top:1px;}
+.content{padding:12px;max-width:500px;margin:0 auto;}
+.tabs{display:grid;grid-template-columns:1fr 1fr;background:var(--white);border:1px solid var(--g200);border-radius:var(--r);padding:4px;margin-bottom:12px;gap:4px;}
+.tab{padding:13px 8px;border:none;border-radius:var(--rs);background:transparent;color:var(--g600);font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all 0.2s;}
+.tab.active{background:var(--blue);color:var(--white);}
+.card{background:var(--white);border-radius:var(--r);border:1px solid var(--g200);padding:16px;margin-bottom:12px;}
+.card-label{font-size:11px;font-weight:700;color:var(--g400);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:12px;}
+.mic-outer{display:flex;flex-direction:column;align-items:center;padding:4px 0 18px;}
+.mic-ring{width:100px;height:100px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2.5px solid var(--g200);background:var(--white);cursor:pointer;transition:all 0.2s;user-select:none;-webkit-user-select:none;touch-action:manipulation;}
+.mic-ring.rec{border-color:var(--red);background:var(--red-lt);animation:ring-pulse 1.2s ease-in-out infinite;}
+.mic-ring svg{width:42px;height:42px;}
+@keyframes ring-pulse{0%,100%{box-shadow:0 0 0 0 rgba(217,48,37,0.25)}50%{box-shadow:0 0 0 16px rgba(217,48,37,0)}}
+.mic-status{margin-top:14px;font-size:14px;font-weight:600;color:var(--g600);text-align:center;}
+.mic-status.rec{color:var(--red);}
+.rec-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--red);margin-right:6px;animation:blink 1s infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.2}}
+.vmode-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%;margin-top:16px;}
+.vmb{padding:11px 6px;border:1.5px solid var(--g200);border-radius:var(--rs);background:var(--white);font-size:12px;font-weight:600;color:var(--g600);cursor:pointer;text-align:center;line-height:1.4;touch-action:manipulation;}
+.vmb small{display:block;font-size:10px;font-weight:400;opacity:0.7;margin-top:2px;}
+.vmb.active{background:var(--green-lt);color:var(--green);border-color:var(--green);}
+textarea{width:100%;min-height:80px;padding:12px;font-size:16px;border:1.5px solid var(--g200);border-radius:var(--rs);background:var(--g50);color:var(--g900);resize:none;font-family:'Courier New',monospace;letter-spacing:0.05em;margin-top:14px;}
+textarea:focus{outline:none;border-color:var(--blue);background:var(--white);}
+.field{margin-top:13px;}
+.field label{display:block;font-size:11px;font-weight:700;color:var(--g400);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:6px;}
+.field input{width:100%;padding:14px 12px;font-size:16px;border:1.5px solid var(--g200);border-radius:var(--rs);background:var(--g50);color:var(--g900);font-family:'Courier New',monospace;}
+.field input:focus{outline:none;border-color:var(--blue);background:var(--white);}
+.btn-add{width:100%;margin-top:14px;padding:17px;font-size:16px;font-weight:700;border:none;border-radius:var(--rs);background:var(--blue);color:var(--white);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;touch-action:manipulation;}
+.btn-add:active{background:var(--blue-dk);}
+.nosup{background:var(--amber-lt);color:var(--amber);border-radius:var(--rs);padding:11px 13px;font-size:13px;font-weight:500;margin-top:12px;display:none;line-height:1.5;}
+.ent-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.ent-title{font-size:15px;font-weight:700;color:var(--g900);}
+.pill{font-size:11px;font-weight:700;background:var(--blue-lt);color:var(--blue);padding:4px 10px;border-radius:20px;}
+.entry{display:flex;align-items:center;gap:10px;padding:13px 0;border-top:1px solid var(--g100);}
+.entry:first-child{border-top:none;}
+.enum{font-size:11px;font-weight:700;color:var(--g400);min-width:24px;text-align:right;}
+.ebody{flex:1;min-width:0;}
+.eid{display:inline-block;font-size:10px;font-weight:700;background:var(--blue-lt);color:var(--blue);padding:2px 8px;border-radius:20px;margin-bottom:4px;}
+.erdg{font-size:22px;font-weight:800;font-family:'Courier New',monospace;color:var(--g900);letter-spacing:0.08em;line-height:1.2;}
+.emeta{font-size:11px;color:var(--g400);margin-top:3px;}
+.del{width:44px;height:44px;border:none;border-radius:50%;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--g400);flex-shrink:0;touch-action:manipulation;}
+.del:active{background:var(--red-lt);color:var(--red);}
+.empty{text-align:center;padding:36px 16px;color:var(--g400);font-size:14px;line-height:1.9;}
+.save-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.sbtn{padding:15px 8px;border-radius:var(--rs);border:2px solid;background:var(--white);font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;line-height:1.3;text-align:center;touch-action:manipulation;}
+.sbtn.xls{border-color:var(--green);color:var(--green);}
+.sbtn.xls:active{background:var(--green-lt);}
+.sbtn.doc{border-color:var(--blue);color:var(--blue);}
+.sbtn.doc:active{background:var(--blue-lt);}
+.sbtn.loc{grid-column:1/-1;border-color:var(--g400);color:var(--g800);margin-top:4px;}
+.sbtn.loc:active{background:var(--g100);}
+.toast{margin-top:10px;padding:12px 14px;border-radius:var(--rs);font-size:13px;font-weight:600;text-align:center;display:none;}
+.toast.ok{background:var(--green-lt);color:var(--green);display:block;}
+.toast.err{background:var(--red-lt);color:var(--red);display:block;}
+.tip{font-size:11px;color:var(--g400);text-align:center;margin-top:8px;line-height:1.6;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-icon">💧</div>
+  <div>
+    <h1>Water Meter Recorder</h1>
+    <p>Voice or manual — auto-saves offline</p>
+  </div>
+</div>
+
+<div class="content">
+
+  <div class="tabs">
+    <button class="tab active" id="tab-v" onclick="setMode('v')">🎤 Voice</button>
+    <button class="tab" id="tab-m" onclick="setMode('m')">⌨️ Manual</button>
+  </div>
+
+  <!-- VOICE -->
+  <div class="card" id="vsec">
+    <div class="mic-outer">
+      <div class="mic-ring" id="micRing" onclick="toggleRec()">
+        <svg id="micSvg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/>
+          <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+          <line x1="12" y1="19" x2="12" y2="22"/>
+          <line x1="8" y1="22" x2="16" y2="22"/>
+        </svg>
+      </div>
+      <div class="mic-status" id="micLbl">Tap the mic to record</div>
+      <div class="vmode-row">
+        <button class="vmb active" id="vw" onclick="setVM('word')">Word mode<small>spaces included</small></button>
+        <button class="vmb" id="vc" onclick="setVM('char')">Digit mode<small>no spaces at all</small></button>
+      </div>
+    </div>
+
+    <textarea id="trx" placeholder="Your speech appears here&#10;You can also type or edit directly"></textarea>
+    <div class="nosup" id="nosup">⚠️ <strong>Voice not supported on this browser.</strong><br>Please use <strong>Chrome</strong> on Android or <strong>Safari</strong> on iPhone, and allow microphone access when prompted.</div>
+
+    <div class="field">
+      <label>Meter ID (optional)</label>
+      <input type="text" id="v-mid" placeholder="e.g. M-001" autocomplete="off" autocorrect="off" autocapitalize="off">
+    </div>
+    <button class="btn-add" onclick="addVoice()">＋ Add This Entry</button>
+  </div>
+
+  <!-- MANUAL -->
+  <div class="card" id="msec" style="display:none">
+    <div class="card-label">Type reading manually</div>
+    <div class="field">
+      <label>Meter ID (optional)</label>
+      <input type="text" id="m-mid" placeholder="e.g. M-001" autocomplete="off" autocorrect="off" autocapitalize="off">
+    </div>
+    <div class="field">
+      <label>Meter Reading</label>
+      <input type="text" id="m-rdg" placeholder="e.g. 002541" autocomplete="off" inputmode="numeric">
+    </div>
+    <button class="btn-add" onclick="addManual()">＋ Add Entry</button>
+  </div>
+
+  <!-- ENTRIES -->
+  <div class="card">
+    <div class="ent-hdr">
+      <span class="ent-title">📋 Recorded readings</span>
+      <span class="pill" id="cnt">0 entries</span>
+    </div>
+    <div id="listbox"><div class="empty">📭<br>No entries yet<br>Start recording above!</div></div>
+  </div>
+
+  <!-- SAVE -->
+  <div class="card">
+    <div class="card-label">Save your data</div>
+    <div class="save-grid">
+      <button class="sbtn xls" onclick="doCSV()">📊 Excel<br><span style="font-size:11px;font-weight:400">(.csv file)</span></button>
+      <button class="sbtn doc" onclick="doDoc()">📄 Word<br><span style="font-size:11px;font-weight:400">(.doc file)</span></button>
+      <button class="sbtn loc" onclick="doLocal()">💾 Save offline — data stays even if you close the page</button>
+    </div>
+    <div class="toast" id="toast"></div>
+    <p class="tip">Data auto-saves every time you add an entry.<br>Tap "Save offline" to make sure nothing is lost.</p>
+  </div>
+
+</div>
+
+<script>
+var entries=[], recog=null, isRec=false, vm='word', finalTxt='';
+
+function loadLocal(){try{var r=localStorage.getItem('wm_v3');if(r){entries=JSON.parse(r);render();}}catch(e){}}
+
+function setMode(m){
+  document.getElementById('vsec').style.display=m==='v'?'':'none';
+  document.getElementById('msec').style.display=m==='m'?'':'none';
+  document.getElementById('tab-v').className='tab'+(m==='v'?' active':'');
+  document.getElementById('tab-m').className='tab'+(m==='m'?' active':'');
+}
+
+function setVM(m){
+  vm=m;
+  document.getElementById('vw').className='vmb'+(m==='word'?' active':'');
+  document.getElementById('vc').className='vmb'+(m==='char'?' active':'');
+}
+
+function initSpeech(){
+  var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){
+    document.getElementById('nosup').style.display='block';
+    document.getElementById('micRing').style.opacity='0.35';
+    document.getElementById('micRing').style.pointerEvents='none';
+    document.getElementById('micLbl').textContent='Voice not available — use Chrome or Safari';
+    return;
+  }
+  function makeRecog(){
+    var r=new SR();
+    r.continuous=false;
+    r.interimResults=true;
+    r.lang='en-PH';
+    r.maxAlternatives=1;
+    r.onstart=function(){setRS(true);};
+    r.onresult=function(e){
+      var interim='';
+      for(var i=e.resultIndex;i<e.results.length;i++){
+        var t=e.results[i][0].transcript;
+        if(e.results[i].isFinal){finalTxt+=(vm==='char')?t.replace(/\s+/g,''):t;}
+        else{interim+=t;}
+      }
+      document.getElementById('trx').value=finalTxt+((vm==='char')?interim.replace(/\s+/g,''):interim);
+    };
+    r.onend=function(){
+      if(isRec){
+        recog=makeRecog();
+        try{recog.start();}catch(e){isRec=false;setRS(false);}
+      } else {setRS(false);}
+    };
+    r.onerror=function(e){
+      if(e.error==='not-allowed'||e.error==='permission-denied'){
+        isRec=false;setRS(false);
+        showToast('❌ Microphone blocked. Go to browser Settings → Site Settings → Microphone and allow access.',false);
+      } else if(e.error!=='no-speech'&&e.error!=='aborted'){
+        isRec=false;setRS(false);
+        showToast('Mic error: '+e.error,false);
+      }
+    };
+    return r;
+  }
+  recog=makeRecog();
+}
+
+function toggleRec(){
+  if(!recog){showToast('Voice not available. Switch to Manual input.',false);return;}
+  if(isRec){
+    isRec=false;
+    try{recog.stop();}catch(e){}
+    setRS(false);
+  } else {
+    finalTxt='';
+    document.getElementById('trx').value='';
+    isRec=true;
+    try{recog.start();}catch(e){isRec=false;setRS(false);showToast('Could not start mic. Try again.',false);}
+  }
+}
+
+function setRS(r){
+  var ring=document.getElementById('micRing');
+  var lbl=document.getElementById('micLbl');
+  var svg=document.getElementById('micSvg');
+  ring.className='mic-ring'+(r?' rec':'');
+  lbl.className='mic-status'+(r?' rec':'');
+  if(r){
+    lbl.innerHTML='<span class="rec-dot"></span>Recording… tap to stop';
+    svg.innerHTML='<line x1="1" y1="1" x2="23" y2="23"/><path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6"/><path d="M17 16.95A7 7 0 0 1 5 12v-2m14 0v2a7 7 0 0 1-.11 1.23"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/>';
+    svg.style.color='var(--red)';
+  } else {
+    lbl.textContent='Tap the mic to record';
+    svg.innerHTML='<path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/>';
+    svg.style.color='var(--g800)';
+  }
+}
+
+function addVoice(){
+  var rdg=document.getElementById('trx').value.trim();
+  var mid=document.getElementById('v-mid').value.trim();
+  if(!rdg){showToast('Please record or type a reading first.',false);return;}
+  if(isRec){isRec=false;try{recog.stop();}catch(e){}}
+  addEntry(mid,rdg);
+  document.getElementById('trx').value='';
+  document.getElementById('v-mid').value='';
+  finalTxt='';
+}
+
+function addManual(){
+  var rdg=document.getElementById('m-rdg').value.trim();
+  var mid=document.getElementById('m-mid').value.trim();
+  if(!rdg){showToast('Please enter a reading.',false);return;}
+  addEntry(mid,rdg);
+  document.getElementById('m-rdg').value='';
+  document.getElementById('m-mid').value='';
+  document.getElementById('m-rdg').focus();
+}
+
+function addEntry(mid,rdg){
+  var now=new Date();
+  entries.push({id:Date.now(),mid:mid,rdg:rdg,date:now.toLocaleDateString('en-PH'),time:now.toLocaleTimeString('en-PH',{hour:'2-digit',minute:'2-digit'})});
+  render();autoSave();showToast('✅ Entry added!',true);
+}
+
+function delEntry(id){
+  if(!confirm('Delete this entry?'))return;
+  entries=entries.filter(function(e){return e.id!==id;});
+  render();autoSave();
+}
+
+function render(){
+  document.getElementById('cnt').textContent=entries.length+(entries.length===1?' entry':' entries');
+  var lb=document.getElementById('listbox');
+  if(!entries.length){lb.innerHTML='<div class="empty">📭<br>No entries yet<br>Start recording above!</div>';return;}
+  lb.innerHTML=entries.map(function(e,i){
+    return '<div class="entry">'+
+      '<span class="enum">'+(i+1)+'</span>'+
+      '<div class="ebody">'+
+        (e.mid?'<span class="eid">'+e.mid+'</span><br>':'')+
+        '<span class="erdg">'+e.rdg+'</span>'+
+        '<div class="emeta">'+e.date+' · '+e.time+'</div>'+
+      '</div>'+
+      '<button class="del" onclick="delEntry('+e.id+')">'+
+        '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>'+
+      '</button>'+
+    '</div>';
+  }).join('');
+}
+
+function autoSave(){try{localStorage.setItem('wm_v3',JSON.stringify(entries));}catch(e){}}
+function doLocal(){autoSave();showToast('✅ Saved in browser storage!',true);}
+
+function showToast(msg,ok){
+  var el=document.getElementById('toast');
+  el.className='toast '+(ok?'ok':'err');
+  el.textContent=msg;
+  clearTimeout(el._t);
+  el._t=setTimeout(function(){el.className='toast';},4000);
+}
+
+function today(){return new Date().toISOString().slice(0,10);}
+
+function dl(blob,name){
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a');
+  a.href=url;a.download=name;
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  setTimeout(function(){URL.revokeObjectURL(url);},1000);
+}
+
+function doCSV(){
+  if(!entries.length){showToast('No entries to save yet.',false);return;}
+  var csv='No.,Meter ID,Reading,Date,Time\n';
+  entries.forEach(function(e,i){csv+=(i+1)+','+(e.mid||'')+','+e.rdg+','+e.date+','+e.time+'\n';});
+  dl(new Blob([csv],{type:'text/csv;charset=utf-8;'}),'water_readings_'+today()+'.csv');
+  showToast('✅ Excel file downloaded!',true);
+}
+
+function doDoc(){
+  if(!entries.length){showToast('No entries to save yet.',false);return;}
+  var rows=entries.map(function(e,i){
+    return '<tr style="background:'+(i%2===0?'#fff':'#f8f9fa')+'"><td>'+(i+1)+'</td><td>'+(e.mid||'—')+'</td><td style="font-family:Courier New,monospace;font-size:16px;font-weight:bold;letter-spacing:2px">'+e.rdg+'</td><td>'+e.date+'</td><td>'+e.time+'</td></tr>';
+  }).join('');
+  var html='<!DOCTYPE html><html><head><meta charset="utf-8"></head><body style="font-family:Arial,sans-serif;padding:30px;color:#202124">'+
+    '<h2 style="color:#1a73e8;margin-bottom:4px">💧 Water Meter Readings</h2>'+
+    '<p style="color:#5f6368;font-size:13px;margin-bottom:20px">Generated: '+new Date().toLocaleString('en-PH')+' · Total: '+entries.length+' entries</p>'+
+    '<table border="1" cellpadding="10" cellspacing="0" style="border-collapse:collapse;width:100%;font-size:14px;border-color:#e8eaed">'+
+    '<thead><tr style="background:#e8f0fe"><th>No.</th><th>Meter ID</th><th>Reading</th><th>Date</th><th>Time</th></tr></thead>'+
+    '<tbody>'+rows+'</tbody></table></body></html>';
+  dl(new Blob(['\ufeff',html],{type:'application/msword'}),'water_readings_'+today()+'.doc');
+  showToast('✅ Word file downloaded!',true);
+}
+
+loadLocal();
+initSpeech();
+</script>
+</body>
+</html>
